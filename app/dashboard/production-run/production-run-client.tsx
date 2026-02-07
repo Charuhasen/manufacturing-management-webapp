@@ -133,11 +133,11 @@ export function ProductionRunClient({
                     className="cursor-pointer transition-colors hover:bg-accent/50"
                     onClick={() => handleCardClick(run)}
                   >
-                    <CardContent className="space-y-3">
+                    <CardContent className="flex flex-1 flex-col gap-3">
                       {/* Header: product + shift */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold leading-tight truncate">
+                          <p className="text-sm font-semibold leading-snug line-clamp-2">
                             {run.product_name}
                           </p>
                           <p className="font-mono text-xs text-muted-foreground">
@@ -149,28 +149,30 @@ export function ProductionRunClient({
                         </Badge>
                       </div>
 
-                      {/* Chart */}
-                      <TargetActualChart
-                        target={run.target_quantity}
-                        actual={run.actual_pieces_produced}
-                      />
+                      {/* Chart — pushed to bottom */}
+                      <div className="mt-auto space-y-2">
+                        <TargetActualChart
+                          target={run.target_quantity}
+                          actual={run.actual_pieces_produced}
+                        />
 
-                      {/* Legend */}
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/25" />
-                          Target: {run.target_quantity}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span
-                            className={`inline-block h-2.5 w-2.5 rounded-sm ${
-                              run.actual_pieces_produced >= run.target_quantity
-                                ? "bg-green-500/80"
-                                : "bg-amber-500/80"
-                            }`}
-                          />
-                          Actual: {run.actual_pieces_produced}
-                        </span>
+                        {/* Legend */}
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/25" />
+                            Target: {run.target_quantity}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              className={`inline-block h-2.5 w-2.5 rounded-sm ${
+                                run.actual_pieces_produced >= run.target_quantity
+                                  ? "bg-green-500/80"
+                                  : "bg-amber-500/80"
+                              }`}
+                            />
+                            Actual: {run.actual_pieces_produced}
+                          </span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
