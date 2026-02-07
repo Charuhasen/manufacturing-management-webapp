@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Panel",
+  title: "APL - Management",
   description: "Manufacturing Management Admin Panel",
 };
 
