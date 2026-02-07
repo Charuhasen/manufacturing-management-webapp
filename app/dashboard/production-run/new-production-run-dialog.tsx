@@ -65,8 +65,9 @@ export function NewProductionRunDialog({
   const [masterBatchId, setMasterBatchId] = useState("");
   const [masterBatchBagsUsed, setMasterBatchBagsUsed] = useState("");
   const [shift, setShift] = useState("");
-  const [startedAt, setStartedAt] = useState("");
-  const [completedAt, setCompletedAt] = useState("");
+  const today = new Date().toISOString().slice(0, 10);
+  const [startedAt, setStartedAt] = useState(today);
+  const [completedAt, setCompletedAt] = useState(today);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,8 +82,8 @@ export function NewProductionRunDialog({
     setMasterBatchId("");
     setMasterBatchBagsUsed("");
     setShift("");
-    setStartedAt("");
-    setCompletedAt("");
+    setStartedAt(new Date().toISOString().slice(0, 10));
+    setCompletedAt(new Date().toISOString().slice(0, 10));
     setError(null);
     setLoading(false);
   }
@@ -96,13 +97,6 @@ export function NewProductionRunDialog({
 
   function handleShiftChange(value: string) {
     setShift(value);
-    if (value === "DAY") {
-      setStartedAt("06:00");
-      setCompletedAt("18:00");
-    } else if (value === "NIGHT") {
-      setStartedAt("18:00");
-      setCompletedAt("06:00");
-    }
   }
 
   function handleProductSelect(product: FinishedGoodProduct) {
@@ -167,12 +161,10 @@ export function NewProductionRunDialog({
       };
 
       if (startedAt) {
-        const today = new Date().toISOString().slice(0, 10);
-        body.started_at = new Date(`${today}T${startedAt}`).toISOString();
+        body.started_at = new Date(startedAt).toISOString();
       }
       if (completedAt) {
-        const today = new Date().toISOString().slice(0, 10);
-        body.completed_at = new Date(`${today}T${completedAt}`).toISOString();
+        body.completed_at = new Date(completedAt).toISOString();
       }
 
       const res = await fetch("/api/production-runs", {
@@ -415,7 +407,7 @@ export function NewProductionRunDialog({
               <Label htmlFor="started-at">Started At</Label>
               <Input
                 id="started-at"
-                type="time"
+                type="date"
                 value={startedAt}
                 onChange={(e) => setStartedAt(e.target.value)}
                 disabled={loading}
@@ -427,7 +419,7 @@ export function NewProductionRunDialog({
               <Label htmlFor="completed-at">Completed At</Label>
               <Input
                 id="completed-at"
-                type="time"
+                type="date"
                 value={completedAt}
                 onChange={(e) => setCompletedAt(e.target.value)}
                 disabled={loading}

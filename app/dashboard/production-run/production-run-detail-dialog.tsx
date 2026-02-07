@@ -32,15 +32,12 @@ function DetailRow({
   );
 }
 
-function formatDateTime(iso: string | null): string {
+function formatDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
   });
 }
 
@@ -109,8 +106,8 @@ export function ProductionRunDetailDialog({
           <DetailRow label="RM Bags Used" value={run.raw_material_bags_used} />
           <DetailRow label="Master Batch" value={run.master_batch_name ?? "—"} />
           <DetailRow label="MB Bags Used" value={run.master_batch_bags_used} />
-          <DetailRow label="Started At" value={formatDateTime(run.started_at)} />
-          <DetailRow label="Completed At" value={formatDateTime(run.completed_at)} />
+          <DetailRow label="Started At" value={formatDate(run.started_at)} />
+          <DetailRow label="Completed At" value={formatDate(run.completed_at)} />
           <DetailRow label="Created By" value={run.created_by_name ?? "—"} />
         </div>
       </DialogContent>
