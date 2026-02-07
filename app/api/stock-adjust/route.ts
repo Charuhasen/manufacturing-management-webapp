@@ -46,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     product_id,
     quantity_change,
     uom,
-    transaction_source_table: "manual_adjustment",
+    transaction_source_table: "products_stock",
     notes,
     created_by: user.id,
   });

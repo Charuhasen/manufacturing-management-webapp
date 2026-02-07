@@ -15,7 +15,7 @@ export default async function StockLedgerPage() {
   const { data: stockLedger } = await supabase
     .from("stock_ledger")
     .select(
-      "id, quantity_change, uom, transaction_source_table, notes, created_at, products ( sku, name )"
+      "id, quantity_change, uom, notes, created_at, products ( sku, name ), users_profile!stock_ledger_created_by_fkey ( first_name, last_name, role )"
     )
     .order("created_at", { ascending: false })
     .limit(100);
@@ -31,7 +31,7 @@ export default async function StockLedgerPage() {
               <TableHead>Date</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Product</TableHead>
-              <TableHead>Source</TableHead>
+              <TableHead>Changed By</TableHead>
               <TableHead className="text-right">Change</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>
@@ -48,9 +48,18 @@ export default async function StockLedgerPage() {
                   </TableCell>
                   <TableCell>{row.products?.name}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">
-                      {row.transaction_source_table}
-                    </Badge>
+                    {row.users_profile ? (
+                      <div>
+                        <p className="text-sm font-medium">
+                          {row.users_profile.first_name} {row.users_profile.last_name}
+                        </p>
+                        <Badge variant="secondary" className="text-xs">
+                          {row.users_profile.role}
+                        </Badge>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell
                     className={`text-right font-medium ${
