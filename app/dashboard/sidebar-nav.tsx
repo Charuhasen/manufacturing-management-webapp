@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Factory, Package, BookOpen, Cog, ClipboardList } from "lucide-react";
+import { Factory, Package, BookOpen, Cog, ClipboardList, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
@@ -25,8 +25,14 @@ const navSections: NavSection[] = [
   {
     label: "",
     items: [
-      { href: "/dashboard/product-manager", label: "Product Manager", icon: ClipboardList },
       { href: "/dashboard/machinery", label: "Machinery", icon: Cog },
+    ],
+  },
+  {
+    label: "Asset Manager",
+    items: [
+      { href: "/dashboard/product-manager", label: "Product Manager", icon: ClipboardList },
+      { href: "/dashboard/machine-manager", label: "Machine Manager", icon: Wrench },
     ],
   },
 ];
