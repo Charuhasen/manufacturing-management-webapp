@@ -97,23 +97,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  if (
-    !Number.isFinite(master_batch_bags_used) ||
-    master_batch_bags_used < 0
-  ) {
-    return json(
-      {
-        success: false,
-        error: "master_batch_bags_used must be a non-negative number",
-      },
-      400
-    );
-  }
+  // master_batch_bags_used validation is deferred until after product lookup,
+  // since it's only required when the product has a parent_master_batch_id
 
   // Validate product is FINISHED_GOOD
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, type")
+    .select("id, type, parent_master_batch_id")
     .eq("id", product_id)
     .single();
 
@@ -126,6 +116,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { success: false, error: "Product must be a FINISHED_GOOD type" },
       400
     );
+  }
+
+  const productUsesMasterBatch = !!product.parent_master_batch_id;
+
+  if (productUsesMasterBatch) {
+    if (
+      !Number.isFinite(master_batch_bags_used) ||
+      master_batch_bags_used < 0
+    ) {
+      return json(
+        {
+          success: false,
+          error: "master_batch_bags_used must be a non-negative number",
+        },
+        400
+      );
+    }
   }
 
   // Validate machine is ACTIVE
@@ -208,8 +215,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       waste_quantity && Number.isFinite(waste_quantity) ? waste_quantity : 0,
     raw_material_id: raw_material_id || null,
     raw_material_bags_used,
-    master_batch_id: master_batch_id || null,
-    master_batch_bags_used,
+    master_batch_id: productUsesMasterBatch ? (master_batch_id || null) : null,
+    master_batch_bags_used: productUsesMasterBatch ? master_batch_bags_used : 0,
     shift,
     created_by: user.id,
   };

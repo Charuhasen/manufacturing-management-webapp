@@ -130,10 +130,15 @@ export function NewProductionRunDialog({
       );
       return;
     }
-    if (!masterBatchBagsUsed || Number(masterBatchBagsUsed) < 0) {
-      setError(
-        "Master batch bags used is required and must be non-negative."
-      );
+    if (selectedProduct?.parent_master_batch_id) {
+      if (!masterBatchBagsUsed || Number(masterBatchBagsUsed) < 0) {
+        setError(
+          "Master batch bags used is required and must be non-negative."
+        );
+        return;
+      }
+    } else if (masterBatchBagsUsed && Number(masterBatchBagsUsed) < 0) {
+      setError("Master batch bags used must be non-negative.");
       return;
     }
     if (!shift) {
