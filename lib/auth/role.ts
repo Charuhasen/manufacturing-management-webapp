@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-export type UserRole = "ADMIN" | "OPERATOR" | "SUPERVISOR" | "MAINTENANCE";
+export type UserRole = "ADMIN" | "SUPERVISOR";
 
 export async function getUserRole(
   supabase: SupabaseClient,

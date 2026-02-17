@@ -116,17 +116,19 @@ Assume a **production-grade SaaS-style application** unless explicitly stated ot
 
 ### Authorization Model
 - User roles stored in `users_profile` table
-- Roles: `ADMIN`, `OPERATOR`, `SUPERVISOR`, `MAINTENANCE`
+- Roles: `ADMIN`, `SUPERVISOR`
 - Helpers in `lib/auth/role.ts`: `getUserRole()`, `isAdmin()`, `isAdminOrSupervisor()`
 
 ### Access Control Matrix
-| Resource | ADMIN | SUPERVISOR | OPERATOR | MAINTENANCE |
-|---|---|---|---|---|
-| Dashboard, Production Runs, Inventory, Stock Ledger | ✅ | ✅ | ✅ | ✅ |
-| Machinery page (view) | ✅ | ✅ | ✅ | ✅ |
-| Machine events (create/edit/delete) | ✅ | ✅ | ❌ | ❌ |
-| Product Manager | ✅ | ❌ | ❌ | ❌ |
-| Machine Manager | ✅ | ❌ | ❌ | ❌ |
+| Resource | ADMIN | SUPERVISOR |
+|---|---|---|
+| Dashboard | ✅ | ✅ |
+| Production Runs | ✅ | ❌ |
+| Inventory | ✅ | ❌ |
+| Stock Ledger | ✅ | ❌ |
+| Machinery (view + events) | ✅ | ✅ |
+| Product Manager | ✅ | ❌ |
+| Machine Manager | ✅ | ❌ |
 
 ### Rules
 - Never trust client claims alone
@@ -166,7 +168,7 @@ Never:
 | `product_type` | RAW_MATERIAL, FINISHED_GOOD, MASTER_BATCH, REGRIND_MATERIAL |
 | `shift_type` | DAY, NIGHT |
 | `unit_of_measure` | pcs, bags |
-| `user_role` | ADMIN, OPERATOR, SUPERVISOR, MAINTENANCE |
+| `user_role` | ADMIN, SUPERVISOR |
 | `machine_event_type` | FAULT, BREAKDOWN, MAINTENANCE |
 | `severity_level` | LOW, MEDIUM, HIGH, CRITICAL |
 | `incident_type` | FAULT, BREAKDOWN, MAINTENANCE |
@@ -363,6 +365,10 @@ These updates are **not optional** — they are part of completing the task.
 ## Change Log
 <!-- Append entries here in reverse-chronological order: newest first -->
 <!-- Format: **YYYY-MM-DD** — Brief description of what changed -->
+
+**2026-02-17** — Restricted Production Run, Inventory, and Stock Ledger pages to ADMIN only. Added server-side auth guards and updated sidebar navigation visibility.
+
+**2026-02-17** — Reduced `user_role` enum from 4 roles (ADMIN, OPERATOR, SUPERVISOR, MAINTENANCE) to 2 roles (ADMIN, SUPERVISOR). Migrated existing OPERATOR/MAINTENANCE users to SUPERVISOR. Updated default role to SUPERVISOR. Updated `lib/auth/role.ts`, `schema.sql`, and access control matrix.
 
 **2026-02-17** — Log event dialog: removed STATUS_CHANGE event type, replaced dropdown with tab selector with descriptions, added "Completed At" field. API updated to accept `resolved_at` on POST and validate against `started_at`.
 

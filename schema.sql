@@ -20,7 +20,7 @@ CREATE TYPE public.shift_type AS ENUM ('DAY', 'NIGHT');
 
 CREATE TYPE public.unit_of_measure AS ENUM ('pcs', 'bags');
 
-CREATE TYPE public.user_role AS ENUM ('ADMIN', 'OPERATOR', 'SUPERVISOR', 'MAINTENANCE');
+CREATE TYPE public.user_role AS ENUM ('ADMIN', 'SUPERVISOR');
 
 CREATE TYPE public.machine_event_type AS ENUM ('FAULT', 'BREAKDOWN', 'MAINTENANCE', 'STATUS_CHANGE');
 
@@ -54,7 +54,7 @@ CREATE TABLE public.users_profile (
   user_id     uuid NOT NULL UNIQUE,
   first_name  text NOT NULL,
   last_name   text NOT NULL,
-  role        public.user_role NOT NULL DEFAULT 'OPERATOR',
+  role        public.user_role NOT NULL DEFAULT 'SUPERVISOR',
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 

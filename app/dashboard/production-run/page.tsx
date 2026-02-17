@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserRole, isAdmin } from "@/lib/auth/role";
 import { ProductionRunClient } from "./production-run-client";
 import type {
   FinishedGoodProduct,
@@ -10,6 +12,18 @@ import type {
 
 export default async function ProductionRunPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const role = await getUserRole(supabase, user.id);
+  if (!isAdmin(role)) {
+    redirect("/dashboard");
+  }
 
   const [
     finishedGoodsRes,

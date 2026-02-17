@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserRole, isAdmin } from "@/lib/auth/role";
 import {
   Table,
   TableBody,
@@ -11,6 +13,18 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function StockLedgerPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const role = await getUserRole(supabase, user.id);
+  if (!isAdmin(role)) {
+    redirect("/dashboard");
+  }
 
   const { data: stockLedger } = await supabase
     .from("stock_ledger")

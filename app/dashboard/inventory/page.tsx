@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserRole, isAdmin } from "@/lib/auth/role";
 import { StockTypeFilter } from "./stock-type-filter";
 import { InventoryTable } from "./inventory-table";
 import { ReorderAlerts } from "./reorder-alerts";
@@ -10,6 +12,18 @@ export default async function StockPage({
 }) {
   const { type, q } = await searchParams;
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const role = await getUserRole(supabase, user.id);
+  if (!isAdmin(role)) {
+    redirect("/dashboard");
+  }
 
   let query = supabase
     .from("products_stock")

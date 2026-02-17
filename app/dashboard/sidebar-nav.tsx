@@ -12,12 +12,14 @@ type NavSection = { label: string; items: NavItem[]; requiredRole?: UserRole };
 const navSections: NavSection[] = [
   {
     label: "",
+    requiredRole: "ADMIN",
     items: [
       { href: "/dashboard/production-run", label: "Production Run", icon: Factory },
     ],
   },
   {
     label: "Stock",
+    requiredRole: "ADMIN",
     items: [
       { href: "/dashboard/inventory", label: "Inventory", icon: Package },
       { href: "/dashboard/stock-ledger", label: "Stock Ledger", icon: BookOpen },
