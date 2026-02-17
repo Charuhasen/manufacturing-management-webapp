@@ -364,6 +364,8 @@ These updates are **not optional** — they are part of completing the task.
 <!-- Append entries here in reverse-chronological order: newest first -->
 <!-- Format: **YYYY-MM-DD** — Brief description of what changed -->
 
+**2026-02-17** — Removed print button from the machinery page.
+
 **2026-02-17** — Synced CLAUDE.md with full codebase state: added project layout, auth flow, access control matrix, DB schema reference, all API routes, and all pages/components.
 
 **2026-02-17** — Added `machine_incidents` table, `machine_status_log` table, `incident_type` and `incident_severity` enums, extended `machine_status` enum with `BREAKDOWN` and `IDLE`, added RLS policies on `machine_events`, and synced `schema.sql` to match current DB state.

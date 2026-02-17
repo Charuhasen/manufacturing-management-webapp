@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserRole, isAdminOrSupervisor } from "@/lib/auth/role";
 import { MachineryClient } from "./machinery-client";
-import { PrintButton } from "@/components/shared/print-button";
+
 
 export interface Machine {
   id: string;
@@ -63,10 +63,7 @@ export default async function MachineryPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Machinery</h2>
-        <PrintButton />
-      </div>
+      <h2 className="text-2xl font-semibold">Machinery</h2>
       <MachineryClient
         machines={machines}
         events={events}
