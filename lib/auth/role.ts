@@ -18,3 +18,7 @@ export async function getUserRole(
 export function isAdmin(role: UserRole | null): boolean {
   return role === "ADMIN";
 }
+
+export function isAdminOrSupervisor(role: UserRole | null): boolean {
+  return role === "ADMIN" || role === "SUPERVISOR";
+}

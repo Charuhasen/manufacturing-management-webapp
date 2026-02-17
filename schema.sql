@@ -3,14 +3,14 @@
 -- =============================================================
 -- Run this file against a fresh Supabase project to recreate
 -- all public-schema objects (enums, tables, indexes, functions).
--- 7TH FEB 16:37
+-- 17TH FEB 2026
 -- =============================================================
 
 -- ---------------------
 -- 1. ENUM TYPES
 -- ---------------------
 
-CREATE TYPE public.machine_status AS ENUM ('ACTIVE', 'MAINTENANCE', 'RETIRED');
+CREATE TYPE public.machine_status AS ENUM ('ACTIVE', 'MAINTENANCE', 'RETIRED', 'BREAKDOWN', 'IDLE');
 
 CREATE TYPE public.process_type AS ENUM ('BLOW_MOULDING', 'INJECTION_MOULDING', 'EXTRUSION', 'THERMOFORMING');
 
@@ -21,6 +21,14 @@ CREATE TYPE public.shift_type AS ENUM ('DAY', 'NIGHT');
 CREATE TYPE public.unit_of_measure AS ENUM ('pcs', 'bags');
 
 CREATE TYPE public.user_role AS ENUM ('ADMIN', 'OPERATOR', 'SUPERVISOR', 'MAINTENANCE');
+
+CREATE TYPE public.machine_event_type AS ENUM ('FAULT', 'BREAKDOWN', 'MAINTENANCE', 'STATUS_CHANGE');
+
+CREATE TYPE public.severity_level AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+
+CREATE TYPE public.incident_type AS ENUM ('FAULT', 'BREAKDOWN', 'MAINTENANCE');
+
+CREATE TYPE public.incident_severity AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
 
 
 -- ---------------------
@@ -138,6 +146,69 @@ COMMENT ON COLUMN public.production_runs.waste_quantity IS 'Calculated scraps or
 COMMENT ON COLUMN public.production_runs.raw_material_id IS 'The specific Raw Material SKU used in this run';
 
 
+-- Tracks machine faults, breakdowns, maintenance, and status changes
+CREATE TABLE public.machine_events (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id        uuid NOT NULL REFERENCES public.machines(id),
+  event_type        public.machine_event_type NOT NULL,
+  severity          public.severity_level NOT NULL DEFAULT 'LOW',
+  description       text NOT NULL,
+  started_at        timestamptz NOT NULL DEFAULT now(),
+  resolved_at       timestamptz,
+  resolution_notes  text,
+  created_by        uuid NOT NULL REFERENCES public.users_profile(user_id),
+  resolved_by       uuid REFERENCES public.users_profile(user_id),
+  created_at        timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT check_resolved_after_started CHECK (
+    resolved_at IS NULL OR resolved_at >= started_at
+  )
+);
+
+COMMENT ON TABLE  public.machine_events IS 'Tracks machine faults, breakdowns, maintenance, and status changes';
+COMMENT ON COLUMN public.machine_events.started_at IS 'When the event started (fault reported, maintenance began, etc.)';
+COMMENT ON COLUMN public.machine_events.resolved_at IS 'When the event was resolved — NULL means ongoing';
+COMMENT ON COLUMN public.machine_events.resolved_by IS 'User who resolved the event';
+
+
+-- Fault, breakdown, and maintenance incident records for machines
+CREATE TABLE public.machine_incidents (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id        uuid NOT NULL REFERENCES public.machines(id),
+  type              public.incident_type NOT NULL,
+  severity          public.incident_severity NOT NULL DEFAULT 'MEDIUM',
+  title             text NOT NULL,
+  description       text,
+  root_cause        text,
+  resolution_notes  text,
+  parts_replaced    text,
+  started_at        timestamptz NOT NULL DEFAULT now(),
+  resolved_at       timestamptz,
+  reported_by       uuid NOT NULL REFERENCES public.users_profile(user_id),
+  resolved_by       uuid REFERENCES public.users_profile(user_id),
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  public.machine_incidents IS 'Fault, breakdown, and maintenance incident records for machines';
+COMMENT ON COLUMN public.machine_incidents.started_at IS 'When the incident began — used with resolved_at to calculate downtime';
+COMMENT ON COLUMN public.machine_incidents.resolved_at IS 'NULL means the incident is still open/unresolved';
+
+
+-- Audit log of every machine status transition
+CREATE TABLE public.machine_status_log (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id      uuid NOT NULL REFERENCES public.machines(id),
+  previous_status public.machine_status,
+  new_status      public.machine_status NOT NULL,
+  notes           text,
+  changed_by      uuid NOT NULL REFERENCES public.users_profile(user_id),
+  changed_at      timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  public.machine_status_log IS 'Audit log of every machine status transition';
+COMMENT ON COLUMN public.machine_status_log.previous_status IS 'NULL for the first recorded status of a machine';
+
+
 -- ---------------------
 -- 3. INDEXES
 -- ---------------------
@@ -145,9 +216,43 @@ COMMENT ON COLUMN public.production_runs.raw_material_id IS 'The specific Raw Ma
 CREATE INDEX idx_stock_ledger_product_id ON public.stock_ledger USING btree (product_id);
 CREATE INDEX idx_stock_ledger_transaction ON public.stock_ledger USING btree (transaction_source_table, transaction_id);
 
+CREATE INDEX idx_machine_events_machine_id ON public.machine_events USING btree (machine_id);
+CREATE INDEX idx_machine_events_event_type ON public.machine_events USING btree (event_type);
+CREATE INDEX idx_machine_events_unresolved ON public.machine_events USING btree (machine_id) WHERE resolved_at IS NULL;
+
+CREATE INDEX idx_machine_incidents_machine_id ON public.machine_incidents USING btree (machine_id);
+CREATE INDEX idx_machine_incidents_type ON public.machine_incidents USING btree (type);
+CREATE INDEX idx_machine_incidents_resolved_at ON public.machine_incidents USING btree (resolved_at) WHERE resolved_at IS NULL;
+
+CREATE INDEX idx_machine_status_log_machine_id ON public.machine_status_log USING btree (machine_id);
+CREATE INDEX idx_machine_status_log_changed_at ON public.machine_status_log USING btree (changed_at);
+
 
 -- ---------------------
--- 4. FUNCTIONS
+-- 4. ROW LEVEL SECURITY
+-- ---------------------
+
+ALTER TABLE public.machine_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can read machine events"
+  ON public.machine_events FOR SELECT
+  TO authenticated USING (true);
+
+CREATE POLICY "Authenticated users can insert machine events"
+  ON public.machine_events FOR INSERT
+  TO authenticated WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can update machine events"
+  ON public.machine_events FOR UPDATE
+  TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can delete machine events"
+  ON public.machine_events FOR DELETE
+  TO authenticated USING (true);
+
+
+-- ---------------------
+-- 5. FUNCTIONS
 -- ---------------------
 
 CREATE OR REPLACE FUNCTION public.adjust_stock(
