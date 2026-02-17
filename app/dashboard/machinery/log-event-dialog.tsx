@@ -29,11 +29,25 @@ interface LogEventDialogProps {
 }
 
 const EVENT_TYPES = [
-  { value: "FAULT", label: "Fault" },
-  { value: "BREAKDOWN", label: "Breakdown" },
-  { value: "MAINTENANCE", label: "Maintenance" },
-  { value: "STATUS_CHANGE", label: "Status Change" },
-];
+  {
+    value: "FAULT",
+    label: "Fault",
+    description:
+      "A machine malfunction or error that may still allow partial operation. Requires attention but the machine is not completely stopped.",
+  },
+  {
+    value: "BREAKDOWN",
+    label: "Breakdown",
+    description:
+      "The machine has completely stopped functioning and cannot produce. Immediate intervention is required to resume operations.",
+  },
+  {
+    value: "MAINTENANCE",
+    label: "Maintenance",
+    description:
+      "Scheduled or unscheduled maintenance work on the machine. Includes inspections, part replacements, cleaning, or calibration.",
+  },
+] as const;
 
 const SEVERITIES = [
   { value: "LOW", label: "Low" },
@@ -52,17 +66,19 @@ export function LogEventDialog({
   const [error, setError] = useState<string | null>(null);
 
   const [machineId, setMachineId] = useState("");
-  const [eventType, setEventType] = useState("");
+  const [eventType, setEventType] = useState<string>("FAULT");
   const [severity, setSeverity] = useState("LOW");
   const [description, setDescription] = useState("");
   const [startedAt, setStartedAt] = useState("");
+  const [completedAt, setCompletedAt] = useState("");
 
   function resetForm() {
     setMachineId("");
-    setEventType("");
+    setEventType("FAULT");
     setSeverity("LOW");
     setDescription("");
     setStartedAt("");
+    setCompletedAt("");
     setError(null);
   }
 
@@ -73,12 +89,13 @@ export function LogEventDialog({
       setError("Please select a machine.");
       return;
     }
-    if (!eventType) {
-      setError("Please select an event type.");
-      return;
-    }
     if (!description.trim()) {
       setError("Description is required.");
+      return;
+    }
+
+    if (completedAt && startedAt && new Date(completedAt) < new Date(startedAt)) {
+      setError("Completed date cannot be before started date.");
       return;
     }
 
@@ -94,6 +111,10 @@ export function LogEventDialog({
 
       if (startedAt) {
         body.started_at = new Date(startedAt).toISOString();
+      }
+
+      if (completedAt) {
+        body.resolved_at = new Date(completedAt).toISOString();
       }
 
       const res = await fetch("/api/machine-events", {
@@ -119,6 +140,8 @@ export function LogEventDialog({
     }
   }
 
+  const selectedType = EVENT_TYPES.find((t) => t.value === eventType);
+
   return (
     <Dialog
       open={open}
@@ -127,39 +150,49 @@ export function LogEventDialog({
         if (!isOpen) resetForm();
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Log Machine Event</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          {/* Event Type Tabs */}
           <div className="space-y-2">
-            <Label>Machine</Label>
-            <Select value={machineId} onValueChange={setMachineId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select machine" />
-              </SelectTrigger>
-              <SelectContent>
-                {machines.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Event Type</Label>
+            <div className="flex gap-2">
+              {EVENT_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setEventType(t.value)}
+                  className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    eventType === t.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {selectedType && (
+              <p className="text-xs text-muted-foreground">
+                {selectedType.description}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Event Type</Label>
-              <Select value={eventType} onValueChange={setEventType}>
+              <Label>Machine</Label>
+              <Select value={machineId} onValueChange={setMachineId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Select machine" />
                 </SelectTrigger>
                 <SelectContent>
-                  {EVENT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {machines.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -194,14 +227,26 @@ export function LogEventDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="started-at">Started At (optional)</Label>
-            <Input
-              id="started-at"
-              type="datetime-local"
-              value={startedAt}
-              onChange={(e) => setStartedAt(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="started-at">Started At (optional)</Label>
+              <Input
+                id="started-at"
+                type="datetime-local"
+                value={startedAt}
+                onChange={(e) => setStartedAt(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="completed-at">Completed At (optional)</Label>
+              <Input
+                id="completed-at"
+                type="datetime-local"
+                value={completedAt}
+                onChange={(e) => setCompletedAt(e.target.value)}
+              />
+            </div>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

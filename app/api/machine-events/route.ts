@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserRole, isAdminOrSupervisor } from "@/lib/auth/role";
 import { NextRequest, NextResponse } from "next/server";
 
-const VALID_EVENT_TYPES = ["FAULT", "BREAKDOWN", "MAINTENANCE", "STATUS_CHANGE"] as const;
+const VALID_EVENT_TYPES = ["FAULT", "BREAKDOWN", "MAINTENANCE"] as const;
 const VALID_SEVERITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 
 function json(body: { success: boolean; data?: unknown; error?: string }, status = 200) {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return json({ success: false, error: "Invalid JSON body" }, 400);
   }
 
-  const { machine_id, event_type, severity, description, started_at } = body;
+  const { machine_id, event_type, severity, description, started_at, resolved_at } = body;
 
   if (!machine_id || typeof machine_id !== "string") {
     return json({ success: false, error: "machine_id is required" }, 400);
@@ -123,6 +123,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return json({ success: false, error: "Invalid started_at date" }, 400);
     }
     insertData.started_at = started_at;
+  }
+
+  if (resolved_at && typeof resolved_at === "string") {
+    const parsedResolved = new Date(resolved_at);
+    if (isNaN(parsedResolved.getTime())) {
+      return json({ success: false, error: "Invalid resolved_at date" }, 400);
+    }
+    if (started_at && parsedResolved < new Date(started_at as string)) {
+      return json({ success: false, error: "Completed date cannot be before started date" }, 400);
+    }
+    insertData.resolved_at = resolved_at;
+    insertData.resolved_by = user.id;
   }
 
   const { data, error } = await supabase

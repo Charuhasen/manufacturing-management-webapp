@@ -167,7 +167,7 @@ Never:
 | `shift_type` | DAY, NIGHT |
 | `unit_of_measure` | pcs, bags |
 | `user_role` | ADMIN, OPERATOR, SUPERVISOR, MAINTENANCE |
-| `machine_event_type` | FAULT, BREAKDOWN, MAINTENANCE, STATUS_CHANGE |
+| `machine_event_type` | FAULT, BREAKDOWN, MAINTENANCE |
 | `severity_level` | LOW, MEDIUM, HIGH, CRITICAL |
 | `incident_type` | FAULT, BREAKDOWN, MAINTENANCE |
 | `incident_severity` | LOW, MEDIUM, HIGH, CRITICAL |
@@ -363,6 +363,8 @@ These updates are **not optional** — they are part of completing the task.
 ## Change Log
 <!-- Append entries here in reverse-chronological order: newest first -->
 <!-- Format: **YYYY-MM-DD** — Brief description of what changed -->
+
+**2026-02-17** — Log event dialog: removed STATUS_CHANGE event type, replaced dropdown with tab selector with descriptions, added "Completed At" field. API updated to accept `resolved_at` on POST and validate against `started_at`.
 
 **2026-02-17** — Removed print button from the machinery page.
 
